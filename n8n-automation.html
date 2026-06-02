@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoFlow — N8N Style Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d13;
+  --s1:#0f1420;
+  --s2:#141b2d;
+  --s3:#1a2235;
+  --b1:#1e2d45;
+  --b2:#253552;
+  --b3:#2e4068;
+  --acc:#e8ff47;
+  --acc2:#ff6b35;
+  --acc3:#7c3aed;
+  --blue:#3b82f6;
+  --green:#22c55e;
+  --red:#ef4444;
+  --orange:#f59e0b;
+  --pink:#ec4899;
+  --cyan:#06b6d4;
+  --text:#f1f5f9;
+  --t2:#94a3b8;
+  --t3:#475569;
+  --t4:#2d3a50;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+/* ══ LAYOUT ══ */
+.shell{display:flex;height:100vh;overflow:hidden;}
+
+/* ══ SIDEBAR ══ */
+.sidebar{
+  width:220px;min-width:220px;
+  background:var(--s1);
+  border-right:1px solid var(--b1);
+  display:flex;flex-direction:column;
+  transition:width .25s ease;
+  overflow:hidden;z-index:10;
+}
+.sidebar.mini{width:52px;min-width:52px;}
+.sb-logo{
+  padding:16px 14px;
+  border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+}
+.sb-logo-mark{
+  width:28px;height:28px;min-width:28px;
+  background:var(--acc);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:#000;
+  font-family:'Orbitron',sans-serif;
+}
+.sb-logo-text{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:var(--acc);white-space:nowrap;letter-spacing:1px;}
+.sidebar.mini .sb-logo-text{display:none;}
+
+.sb-nav{flex:1;padding:10px 6px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.sb-sec{font-size:9px;letter-spacing:2px;color:var(--t3);padding:10px 8px 4px;white-space:nowrap;font-weight:600;}
+.sidebar.mini .sb-sec{opacity:0;}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 8px;border-radius:8px;
+  cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;
+  transition:all .15s;white-space:nowrap;overflow:hidden;
+  position:relative;
+}
+.sb-item:hover{background:var(--s2);color:var(--text);}
+.sb-item.on{background:rgba(232,255,71,.08);color:var(--acc);border:1px solid rgba(232,255,71,.15);}
+.sb-item .ico{font-size:16px;min-width:20px;text-align:center;}
+.sb-item .lbl{transition:opacity .2s;}
+.sidebar.mini .sb-item .lbl{opacity:0;width:0;}
+.sb-badge{margin-left:auto;background:var(--acc3);color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;font-family:'JetBrains Mono',monospace;}
+.sidebar.mini .sb-badge{display:none;}
+.sb-foot{padding:10px 6px;border-top:1px solid var(--b1);}
+.sb-toggle{width:100%;display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer;color:var(--t3);font-size:12px;background:none;border:none;font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+.sb-toggle:hover{color:var(--t2);background:var(--s2);}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  height:52px;background:var(--s1);
+  border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;
+  padding:0 16px;gap:10px;
+  flex-shrink:0;
+}
+.tb-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--text);letter-spacing:1px;}
+.tb-search{
+  flex:1;max-width:280px;margin-left:8px;
+  position:relative;
+}
+.tb-search input{
+  width:100%;background:var(--s2);border:1px solid var(--b1);
+  border-radius:8px;padding:7px 10px 7px 32px;
+  color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;
+  transition:border-color .2s;
+}
+.tb-search input:focus{border-color:var(--acc);}
+.tb-search .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Space Grotesk',sans-serif;transition:all .15s;white-space:nowrap;}
+.btn-y{background:var(--acc);color:#000;}
+.btn-y:hover{opacity:.85;transform:translateY(-1px);}
+.btn-o{background:var(--acc2);color:#fff;}
+.btn-o:hover{opacity:.85;}
+.btn-s{background:var(--s2);color:var(--t2);border:1px solid var(--b1);}
+.btn-s:hover{border-color:var(--acc);color:var(--acc);}
+.btn-g{background:none;color:var(--t2);border:none;padding:6px 8px;font-size:16px;}
+.btn-g:hover{color:var(--text);}
+.btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.btn-red:hover{background:rgba(239,68,68,.25);}
+.btn-green{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.btn-green:hover{background:rgba(34,197,94,.25);}
+
+.av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--acc3),var(--acc));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;cursor:pointer;}
+
+/* ══ CONTENT ══ */
+.content{flex:1;overflow:hidden;position:relative;}
+.page{display:none;height:100%;overflow-y:auto;}
+.page.on{display:flex;flex-direction:column;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.ph{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s1);}
+.ph-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;}
+.ph-sub{font-size:11px;color:var(--t2);margin-top:2px;}
+.pc{flex:1;overflow-y:auto;padding:16px 20px;}
+
+/* ══ CARDS GRID ══ */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px;}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px;position:relative;overflow:hidden;transition:all .2s;cursor:default;}
+.card:hover{border-color:var(--b3);transform:translateY(-1px);}
+.card-acc{border-color:rgba(232,255,71,.2);}
+.card-acc:hover{border-color:var(--acc);}
+.card-icon{font-size:22px;margin-bottom:10px;}
+.card-val{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;line-height:1;}
+.card-lbl{font-size:11px;color:var(--t2);margin-top:4px;letter-spacing:.5px;font-weight:500;}
+.card-chg{font-size:11px;margin-top:6px;font-family:'JetBrains Mono',monospace;}
+.up{color:var(--green);} .dn{color:var(--red);}
+.card::after{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;background:radial-gradient(circle,rgba(232,255,71,.06),transparent 70%);}
+
+/* ══ TABLE ══ */
+.tbl-wrap{background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:left;padding:10px 14px;font-size:10px;letter-spacing:1.5px;color:var(--t3);border-bottom:1px solid var(--b1);background:var(--s2);font-weight:600;text-transform:uppercase;}
+.tbl td{padding:11px 14px;border-bottom:1px solid rgba(30,45,69,.5);color:var(--t2);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.015);}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.tg{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+.tp{background:rgba(245,158,11,.12);color:var(--orange);border:1px solid rgba(245,158,11,.2);}
+.te{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.ti{background:rgba(148,163,184,.1);color:var(--t2);border:1px solid var(--b1);}
+.tb-tag{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+
+/* ══ CANVAS PAGE ══ */
+.canvas-page{display:none;height:100%;flex-direction:column;}
+.canvas-page.on{display:flex;}
+.canvas-toolbar{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;
+  background:var(--s1);border-bottom:1px solid var(--b1);
+  flex-shrink:0;flex-wrap:wrap;
+}
+.sep{width:1px;height:20px;background:var(--b1);margin:0 2px;}
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg);}
+.canvas-bg{
+  position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(30,45,69,.8) 1px,transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;
+}
+.canvas-inner{position:absolute;inset:0;overflow:visible;}
+svg.canvas-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+
+/* Nodes */
+.nd{
+  position:absolute;
+  background:var(--s2);
+  border:1.5px solid var(--b2);
+  border-radius:10px;
+  min-width:160px;
+  cursor:grab;
+  user-select:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.nd:hover{border-color:var(--b3);}
+.nd.sel{border-color:var(--acc);box-shadow:0 0 0 3px rgba(232,255,71,.1);}
+.nd.run{border-color:var(--green);box-shadow:0 0 16px rgba(34,197,94,.2);animation:nodePulse 1s infinite;}
+.nd.err{border-color:var(--red);box-shadow:0 0 16px rgba(239,68,68,.2);}
+.nd.done{border-color:var(--cyan);}
+@keyframes nodePulse{0%,100%{box-shadow:0 0 16px rgba(34,197,94,.2)}50%{box-shadow:0 0 28px rgba(34,197,94,.4)}}
+
+.nd-head{
+  padding:10px 12px 8px;
+  border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;gap:8px;
+}
+.nd-ico{
+  width:28px;height:28px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.nd-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;}
+.nd-type{font-size:9px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+.nd-body{padding:8px 12px;}
+.nd-desc{font-size:11px;color:var(--t3);line-height:1.4;}
+.nd-status{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9px;font-family:'JetBrains Mono',monospace;
+  padding:2px 6px;border-radius:4px;margin-top:4px;
+}
+.ns-idle{background:rgba(71,85,105,.2);color:var(--t3);}
+.ns-run{background:rgba(34,197,94,.15);color:var(--green);}
+.ns-done{background:rgba(6,182,212,.15);color:var(--cyan);}
+.ns-err{background:rgba(239,68,68,.15);color:var(--red);}
+
+/* Ports */
+.port{
+  position:absolute;
+  width:10px;height:10px;
+  background:var(--s1);
+  border:2px solid var(--b3);
+  border-radius:50%;
+  cursor:crosshair;
+  transition:all .15s;z-index:5;
+}
+.port:hover{border-color:var(--acc);background:var(--acc);transform:scale(1.4);}
+.port-in{left:-5px;top:50%;transform:translateY(-50%);}
+.port-out{right:-5px;top:50%;transform:translateY(-50%);}
+.port-in:hover{transform:translateY(-50%) scale(1.4);}
+
+/* SVG paths */
+.edge{fill:none;stroke:var(--b3);stroke-width:2;transition:stroke .2s;}
+.edge.active{stroke:var(--acc);opacity:.7;stroke-dasharray:6 3;animation:flow 1s linear infinite;}
+.edge.running{stroke:var(--green);opacity:.9;stroke-dasharray:8 4;animation:flow .8s linear infinite;}
+@keyframes flow{to{stroke-dashoffset:-18;}}
+
+/* ══ NODE PANEL (right) ══ */
+.nd-panel{
+  width:280px;min-width:280px;
+  background:var(--s1);
+  border-left:1px solid var(--b1);
+  display:none;flex-direction:column;
+  overflow-y:auto;
+}
+.nd-panel.open{display:flex;}
+.np-head{padding:14px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.np-title{font-size:13px;font-weight:600;}
+.np-body{padding:14px 16px;flex:1;}
+
+/* ══ FORMS ══ */
+.fg{margin-bottom:12px;}
+.fl{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:5px;font-weight:600;}
+.fi,.fs,.fta{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:8px 10px;color:var(--text);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color .15s;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--acc);}
+.fs option{background:var(--s2);}
+.fta{resize:vertical;min-height:70px;line-height:1.5;}
+.fi[type=range]{padding:4px 0;cursor:pointer;}
+
+.toggle-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;}
+.tog{width:32px;height:18px;background:var(--s3);border:1px solid var(--b2);border-radius:9px;position:relative;transition:background .2s;flex-shrink:0;}
+.tog.on{background:var(--acc);}
+.tog::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;}
+.tog.on::after{left:16px;}
+.tog-lbl{font-size:12px;color:var(--t2);}
+
+/* ══ LOG AREA ══ */
+.log{background:var(--bg);border:1px solid var(--b1);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;overflow-y:auto;}
+.ll{display:flex;gap:10px;}
+.lt{color:var(--t3);min-width:78px;}
+.lv-info{color:var(--cyan);}
+.lv-ok{color:var(--green);}
+.lv-warn{color:var(--orange);}
+.lv-err{color:var(--red);}
+.lm{color:var(--t2);}
+
+/* ══ MODAL ══ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;}
+.ov.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:14px;width:min(500px,94vw);max-height:88vh;overflow-y:auto;animation:mUp .2s ease;}
+@keyframes mUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--b1);}
+.mh-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;}
+.mc{padding:16px 20px;}
+.mf{padding:12px 20px;border-top:1px solid var(--b1);display:flex;justify-content:flex-end;gap:8px;}
+.mx{background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer;transition:color .15s;}
+.mx:hover{color:var(--red);}
+
+/* ══ TOAST ══ */
+.toast-box{position:fixed;bottom:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:6px;}
+.toast{background:var(--s1);border:1px solid var(--b2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:12px;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:tSlide .2s ease;border-left:3px solid var(--b2);}
+@keyframes tSlide{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.toast.s{border-left-color:var(--green);}
+.toast.e{border-left-color:var(--red);}
+.toast.i{border-left-color:var(--cyan);}
+.toast.w{border-left-color:var(--orange);}
+
+/* ══ PILL STATUS BAR ══ */
+.sbar{display:flex;align-items:center;gap:10px;padding:6px 16px;background:rgba(232,255,71,.03);border-bottom:1px solid var(--b1);font-size:11px;color:var(--t2);flex-shrink:0;overflow-x:auto;}
+.spill{display:flex;align-items:center;gap:5px;padding:2px 8px;background:var(--s2);border:1px solid var(--b1);border-radius:12px;white-space:nowrap;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:blink 2s infinite;}
+.sdot.y{background:var(--orange);box-shadow:0 0 5px var(--orange);}
+.sdot.r{background:var(--red);box-shadow:0 0 5px var(--red);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ══ HTTP TEST ══ */
+.http-resp{background:var(--bg);border:1px solid var(--b1);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);white-space:pre-wrap;max-height:200px;overflow-y:auto;line-height:1.6;}
+
+/* ══ PROGRESS ══ */
+.prog-wrap{background:var(--s3);border-radius:3px;height:3px;overflow:hidden;margin-top:5px;}
+.prog{height:100%;background:linear-gradient(90deg,var(--acc3),var(--acc));border-radius:3px;transition:width .4s;}
+
+/* ══ NODE PALETTE ══ */
+.palette{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.pal-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;background:var(--s2);
+  border:1px solid var(--b1);border-radius:8px;
+  cursor:pointer;font-size:11px;font-weight:500;
+  transition:all .15s;
+}
+.pal-item:hover{border-color:var(--acc);color:var(--acc);}
+
+/* ══ CRON BUILDER ══ */
+.cron-parts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.cron-part label{font-size:9px;color:var(--t3);text-align:center;display:block;margin-bottom:3px;}
+.cron-part input{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:6px 4px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;outline:none;}
+.cron-part input:focus{border-color:var(--acc);}
+
+/* ══ EXECUTIONS ══ */
+.exec-row td:first-child{font-family:'JetBrains Mono',monospace;color:var(--t3);}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:768px){
+  .sidebar{position:fixed;z-index:50;height:100vh;}
+  .sidebar:not(.mini){box-shadow:0 0 40px rgba(0,0,0,.8);}
+  .tb-search{display:none;}
+  .nd-panel{display:none!important;}
+  .sbar{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar" id="sb">
+  <div class="sb-logo" onclick="toggleSb()">
+    <div class="sb-logo-mark">AF</div>
+    <div class="sb-logo-text">AUTOFLOW</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">WORKSPACE</div>
+    <div class="sb-item on"  onclick="nav('dash',this)"><span class="ico">⬡</span><span class="lbl">Dashboard</span></div>
+    <div class="sb-item"     onclick="nav('canvas',this)"><span class="ico">◈</span><span class="lbl">Canvas Builder</span></div>
+    <div class="sb-item"     onclick="nav('list',this)"><span class="ico">⋮⋮</span><span class="lbl">List Builder</span></div>
+    <div class="sb-item"     onclick="nav('workflows',this)"><span class="ico">▤</span><span class="lbl">Workflows</span><span class="sb-badge" id="wfBadge">0</span></div>
+    <div class="sb-sec">AUTOMATION</div>
+    <div class="sb-item"     onclick="nav('http',this)"><span class="ico">🌐</span><span class="lbl">HTTP Nodes</span></div>
+    <div class="sb-item"     onclick="nav('ai',this)"><span class="ico">🤖</span><span class="lbl">AI Nodes</span></div>
+    <div class="sb-item"     onclick="nav('cron',this)"><span class="ico">⏰</span><span class="lbl">Cron Triggers</span></div>
+    <div class="sb-sec">SYSTEM</div>
+    <div class="sb-item"     onclick="nav('executions',this)"><span class="ico">▷</span><span class="lbl">Executions</span></div>
+    <div class="sb-item"     onclick="nav('logs',this)"><span class="ico">≡</span><span class="lbl">Logs</span></div>
+    <div class="sb-item"     onclick="nav('settings',this)"><span class="ico">⚙</span><span class="lbl">Settings</span></div>
+  </nav>
+  <div class="sb-foot">
+    <button class="sb-toggle" onclick="toggleSb()">
+      <span id="sbIco">◁</span>
+      <span class="lbl" id="sbLbl">Collapse</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="btn btn-g" onclick="toggleSbMobile()">☰</button>
+    <div class="tb-title" id="tbTitle">DASHBOARD</div>
+    <div class="tb-search">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Search workflows…" id="globalSearch" oninput="globalSearchFn(this.value)">
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-s" onclick="openModal('newWfModal')">＋ New Workflow</button>
+      <button class="btn btn-y" onclick="runAllActive()">▷ Run All</button>
+      <button class="btn btn-g" onclick="toast('No new notifications','i')">🔔</button>
+      <div class="av">A</div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="sbar">
+    <div class="spill"><span class="sdot"></span>System OK</div>
+    <div class="spill"><span class="sdot y"></span><span id="runningCount">0</span> Running</div>
+    <div class="spill"><span class="sdot r"></span><span id="errCount">0</span> Errors</div>
+    <span style="color:var(--t3)">|</span>
+    <span>Executions today: <span style="color:var(--acc);font-family:'JetBrains Mono',monospace" id="execToday">0</span></span>
+    <span>Uptime: <span style="color:var(--green);font-family:'JetBrains Mono',monospace" id="uptime">00:00:00</span></span>
+    <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;color:var(--t3)" id="clock"></span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page on" id="pg-dash">
+      <div class="ph">
+        <div><div class="ph-title">DASHBOARD</div><div class="ph-sub">Automation overview & live metrics</div></div>
+        <button class="btn btn-s" onclick="refreshDash()">↺ Refresh</button>
+      </div>
+      <div class="pc">
+        <div class="cg">
+          <div class="card card-acc"><div class="card-icon">⚡</div><div class="card-val" id="dTotal">0</div><div class="card-lbl">TOTAL WORKFLOWS</div></div>
+          <div class="card"><div class="card-icon">▷</div><div class="card-val up" id="dActive">0</div><div class="card-lbl">ACTIVE</div></div>
+          <div class="card"><div class="card-icon">⏱</div><div class="card-val" id="dExec">0</div><div class="card-lbl">TOTAL EXECUTIONS</div><div class="card-chg up" id="dExecChg">+0 today</div></div>
+          <div class="card"><div class="card-icon">✓</div><div class="card-val up" id="dSucc">100%</div><div class="card-lbl">SUCCESS RATE</div></div>
+        </div>
+
+        <div class="tbl-wrap" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--b1);background:var(--s2)">
+            <span style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t2)">RECENT WORKFLOWS</span>
+            <button class="btn btn-s" style="padding:4px 10px;font-size:11px" onclick="nav('workflows',null)">View All</button>
+          </div>
+          <table class="tbl"><thead><tr><th>NAME</th><th>STATUS</th><th>TRIGGER</th><th>LAST RUN</th><th>RUNS</th><th>ACTION</th></tr></thead>
+          <tbody id="dashTbl"></tbody></table>
+        </div>
+
+        <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--b1);background:var(--s2)">
+            <span style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t2)">LIVE LOG</span>
+            <div class="spill"><span class="sdot"></span>Streaming</div>
+          </div>
+          <div class="log" id="dashLog" style="height:160px;border:none;border-radius:0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CANVAS BUILDER ── -->
+    <div class="canvas-page" id="pg-canvas">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--b1);background:var(--s1);flex-shrink:0;flex-wrap:wrap;gap:6px">
+        <div><div style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700">CANVAS BUILDER</div><div style="font-size:11px;color:var(--t2)">Visual drag & drop workflow editor</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-s" onclick="openModal('addNodeModal')">＋ Add Node</button>
+          <button class="btn btn-s" onclick="clearCanvas()">✕ Clear</button>
+          <button class="btn btn-s" onclick="saveCanvas()">💾 Save</button>
+          <button class="btn btn-y" onclick="execCanvas()">▷ Execute</button>
+        </div>
+      </div>
+      <div class="canvas-toolbar">
+        <button class="btn btn-s" onclick="czoom(10)">＋</button>
+        <button class="btn btn-s" onclick="czoom(-10)">－</button>
+        <button class="btn btn-s" onclick="czoom(0)">⊡ Fit</button>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)" id="zoomLbl">100%</span>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:var(--t3)" id="canvasInfo">0 nodes · 0 edges</span>
+        <div class="sep"></div>
+        <span style="font-size:11px;color:var(--t2)">Click canvas to deselect · Drag nodes to move</span>
+      </div>
+      <div style="flex:1;display:flex;overflow:hidden">
+        <div class="canvas-wrap" id="canvasWrap" onclick="deselectNode(event)">
+          <div class="canvas-bg"></div>
+          <div class="canvas-inner" id="canvasInner">
+            <svg class="canvas-svg" id="canvasSVG"></svg>
+            <!-- nodes injected here -->
+          </div>
+        </div>
+        <!-- Right panel -->
+        <div class="nd-panel" id="ndPanel">
+          <div class="np-head">
+            <span class="np-title" id="npTitle">Node Config</span>
+            <button class="btn btn-g" onclick="closePanel()">✕</button>
+          </div>
+          <div class="np-body" id="npBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LIST BUILDER ── -->
+    <div class="page" id="pg-list">
+      <div class="ph">
+        <div><div class="ph-title">LIST BUILDER</div><div class="ph-sub">Step-by-step workflow creation</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" onclick="openModal('addStepModal')">＋ Add Step</button>
+          <button class="btn btn-y" onclick="execList()">▷ Run Flow</button>
+        </div>
+      </div>
+      <div class="pc">
+        <div id="listSteps" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div id="listEmpty" style="text-align:center;padding:40px;color:var(--t3)">
+          <div style="font-size:40px;margin-bottom:12px">⬡</div>
+          <div style="font-size:14px;font-weight:600;color:var(--t2)">No steps yet</div>
+          <div style="font-size:12px;margin-top:4px">Click "+ Add Step" to begin building your workflow</div>
+          <button class="btn btn-y" style="margin-top:16px" onclick="openModal('addStepModal')">＋ Add First Step</button>
+        </div>
+        <div style="margin-top:12px" id="listLogWrap" style="display:none">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;letter-spacing:1px">EXECUTION LOG</div>
+          <div class="log" id="listLog" style="height:140px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WORKFLOWS ── -->
+    <div class="page" id="pg-workflows">
+      <div class="ph">
+        <div><div class="ph-title">WORKFLOWS</div><div class="ph-sub">Manage all saved automations</div></div>
+        <button class="btn btn-y" onclick="openModal('newWfModal')">＋ Create</button>
+      </div>
+      <div class="pc">
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="wfFilters">
+          <button class="btn btn-s" onclick="filterWf('all',this)" style="border-color:var(--acc);color:var(--acc)">All</button>
+          <button class="btn btn-s" onclick="filterWf('active',this)">Active</button>
+          <button class="btn btn-s" onclick="filterWf('paused',this)">Paused</button>
+          <button class="btn btn-s" onclick="filterWf('error',this)">Error</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl"><thead><tr><th>NAME</th><th>STATUS</th><th>TRIGGER</th><th>STEPS</th><th>LAST RUN</th><th>RUNS</th><th>ACTIONS</th></tr></thead>
+          <tbody id="wfTbl"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HTTP NODES ── -->
+    <div class="page" id="pg-http">
+      <div class="ph">
+        <div><div class="ph-title">HTTP NODES</div><div class="ph-sub">Test & configure real HTTP requests</div></div>
+        <button class="btn btn-y" onclick="sendHTTP()">▷ Send Request</button>
+      </div>
+      <div class="pc" style="max-width:900px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="fg">
+            <label class="fl">Method</label>
+            <select class="fs" id="httpMethod">
+              <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option><option>PATCH</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="fl">URL</label>
+            <input class="fi" id="httpUrl" value="https://jsonplaceholder.typicode.com/posts/1" placeholder="https://api.example.com/endpoint">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="fg">
+            <label class="fl">Headers (JSON)</label>
+            <textarea class="fta" id="httpHeaders" style="height:80px">{"Content-Type": "application/json"}</textarea>
+          </div>
+          <div class="fg">
+            <label class="fl">Body (JSON)</label>
+            <textarea class="fta" id="httpBody" style="height:80px">{"key": "value"}</textarea>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Auth Type</label>
+          <select class="fs" id="httpAuth" style="width:auto;min-width:180px" onchange="toggleAuthField()">
+            <option value="none">None</option>
+            <option value="bearer">Bearer Token</option>
+            <option value="basic">Basic Auth</option>
+          </select>
+        </div>
+        <div id="authField" style="display:none;margin-bottom:12px">
+          <label class="fl" id="authLabel">Token</label>
+          <input class="fi" id="authValue" placeholder="Enter token…">
+        </div>
+        <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--b1);background:var(--s2)">
+            <span style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t2)">RESPONSE</span>
+            <span id="httpStatus" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--t3)">—</span>
+          </div>
+          <div class="http-resp" id="httpResp" style="border:none;border-radius:0;min-height:100px">// Response will appear here…</div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t2);margin-bottom:8px">SAVED HTTP NODES</div>
+          <div id="savedHttpNodes" style="display:flex;flex-direction:column;gap:6px"></div>
+          <button class="btn btn-s" style="margin-top:8px" onclick="saveHttpNode()">＋ Save as Node</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI NODES ── -->
+    <div class="page" id="pg-ai">
+      <div class="ph">
+        <div><div class="ph-title">AI NODES</div><div class="ph-sub">Configure Claude / GPT automation nodes</div></div>
+        <button class="btn btn-y" onclick="openModal('newAiNodeModal')">＋ New AI Node</button>
+      </div>
+      <div class="pc">
+        <div style="background:rgba(232,255,71,.04);border:1px solid rgba(232,255,71,.1);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+          <span style="font-size:20px">💡</span>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--acc);margin-bottom:4px">AI Nodes in Workflows</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.6">AI nodes call Claude or GPT API with a prompt template. Use <code style="background:var(--s3);padding:1px 5px;border-radius:3px;color:var(--acc2)">{{input}}</code> as placeholder for dynamic data from previous nodes.</div>
+          </div>
+        </div>
+        <div id="aiNodesList" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div id="aiNodesEmpty" style="text-align:center;padding:30px;color:var(--t3)">
+          <div style="font-size:30px;margin-bottom:8px">🤖</div>
+          <div style="font-size:13px;color:var(--t2)">No AI nodes yet. Create one to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CRON TRIGGERS ── -->
+    <div class="page" id="pg-cron">
+      <div class="ph">
+        <div><div class="ph-title">CRON TRIGGERS</div><div class="ph-sub">Schedule workflows with cron expressions</div></div>
+        <button class="btn btn-y" onclick="openModal('newCronModal')">＋ New Schedule</button>
+      </div>
+      <div class="pc">
+        <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);letter-spacing:1px;margin-bottom:12px">QUICK PRESETS</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px" id="cronPresets"></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--t2);letter-spacing:1px;margin-bottom:8px">ACTIVE SCHEDULES</div>
+        <div id="cronList" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div id="cronEmpty" style="text-align:center;padding:30px;color:var(--t3)">
+          <div style="font-size:30px;margin-bottom:8px">⏰</div>
+          <div style="font-size:13px;color:var(--t2)">No schedules yet. Create one above.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EXECUTIONS ── -->
+    <div class="page" id="pg-executions">
+      <div class="ph">
+        <div><div class="ph-title">EXECUTIONS</div><div class="ph-sub">Full run history</div></div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" onclick="renderExecutions()">↺ Refresh</button>
+          <button class="btn btn-red" onclick="clearExecutions()">Clear All</button>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="tbl-wrap">
+          <table class="tbl"><thead><tr><th>#</th><th>WORKFLOW</th><th>STATUS</th><th>TRIGGER</th><th>STARTED</th><th>DURATION</th><th>NODES</th></tr></thead>
+          <tbody id="execTbl"></tbody></table>
+        </div>
+        <div id="execEmpty" style="text-align:center;padding:40px;color:var(--t3);display:none">
+          <div style="font-size:30px;margin-bottom:8px">▷</div>
+          <div style="font-size:13px;color:var(--t2)">No executions yet. Run a workflow to see results.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LOGS ── -->
+    <div class="page" id="pg-logs">
+      <div class="ph">
+        <div><div class="ph-title">SYSTEM LOGS</div><div class="ph-sub">Full audit trail</div></div>
+        <div style="display:flex;gap:6px">
+          <select class="fs" style="width:auto;padding:6px 10px;font-size:11px" id="logFilter" onchange="renderLogs()">
+            <option value="all">All</option><option value="ok">SUCCESS</option><option value="info">INFO</option><option value="warn">WARN</option><option value="err">ERROR</option>
+          </select>
+          <button class="btn btn-s" onclick="exportLogs()">↓ Export</button>
+          <button class="btn btn-red" onclick="clearLogs()">Clear</button>
+        </div>
+      </div>
+      <div class="pc" style="flex:1;display:flex;flex-direction:column">
+        <div class="log" id="sysLog" style="flex:1;min-height:200px;max-height:calc(100vh - 200px)"></div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="pg-settings">
+      <div class="ph">
+        <div><div class="ph-title">SETTINGS</div><div class="ph-sub">Configure AutoFlow</div></div>
+        <button class="btn btn-y" onclick="saveSettings()">Save</button>
+      </div>
+      <div class="pc">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;max-width:960px">
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--t3);margin-bottom:14px">GENERAL</div>
+            <div class="fg"><label class="fl">Workspace Name</label><input class="fi" id="wsName" value="My AutoFlow"></div>
+            <div class="fg"><label class="fl">Default AI Model</label>
+              <select class="fs" id="aiModel"><option>claude-sonnet-4-20250514</option><option>claude-haiku-4-5-20251001</option><option>gpt-4o</option></select>
+            </div>
+            <div class="fg"><label class="fl">Timezone</label>
+              <select class="fs"><option>Asia/Kolkata (IST)</option><option>UTC</option><option>America/New_York</option></select>
+            </div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--t3);margin-bottom:14px">AI CONFIG</div>
+            <div class="fg"><label class="fl">Claude / OpenAI API Key</label><input class="fi" type="password" id="apiKey" placeholder="sk-…"></div>
+            <div class="fg"><label class="fl">Temperature: <span id="tempVal" style="color:var(--acc)">0.7</span></label>
+              <input type="range" class="fi" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('tempVal').textContent=this.value">
+            </div>
+            <div class="fg"><label class="fl">Max Tokens</label><input class="fi" type="number" value="1000" id="maxTokens"></div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--t3);margin-bottom:14px">EXECUTION</div>
+            <div class="fg"><label class="fl">Max Retries</label><input class="fi" type="number" value="3" id="maxRetries"></div>
+            <div class="fg"><label class="fl">Timeout (sec)</label><input class="fi" type="number" value="30" id="execTimeout"></div>
+            <div class="toggle-row" onclick="this.querySelector('.tog').classList.toggle('on')">
+              <div class="tog on"></div><span class="tog-lbl">Enable execution logging</span>
+            </div>
+            <div class="toggle-row" onclick="this.querySelector('.tog').classList.toggle('on')">
+              <div class="tog"></div><span class="tog-lbl">Debug mode</span>
+            </div>
+          </div>
+          <div style="background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--t3);margin-bottom:14px">DATA</div>
+            <button class="btn btn-s" style="width:100%;margin-bottom:8px" onclick="exportData()">↓ Export All Data (JSON)</button>
+            <button class="btn btn-s" style="width:100%;margin-bottom:8px" onclick="document.getElementById('importFile').click()">↑ Import Data</button>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+            <button class="btn btn-red" style="width:100%" onclick="resetAll()">⚠ Reset All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- New Workflow -->
+<div class="ov" id="newWfModal">
+  <div class="modal">
+    <div class="mh"><span class="mh-title">NEW WORKFLOW</span><button class="mx" onclick="closeModal('newWfModal')">✕</button></div>
+    <div class="mc">
+      <div class="fg"><label class="fl">Workflow Name</label><input class="fi" id="nwName" placeholder="e.g. Lead Scoring Pipeline"></div>
+      <div class="fg"><label class="fl">Description</label><textarea class="fta" id="nwDesc" placeholder="What does this workflow do?"></textarea></div>
+      <div class="fg"><label class="fl">Trigger Type</label>
+        <select class="fs" id="nwTrigger">
+          <option>Webhook</option><option>Schedule</option><option>Manual</option><option>HTTP</option><option>Email</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Initial Status</label>
+        <select class="fs" id="nwStatus"><option value="active">Active</option><option value="paused">Paused</option></select>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('newWfModal')">Cancel</button>
+      <button class="btn btn-y" onclick="createWorkflow()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Canvas Node -->
+<div class="ov" id="addNodeModal">
+  <div class="modal">
+    <div class="mh"><span class="mh-title">ADD NODE</span><button class="mx" onclick="closeModal('addNodeModal')">✕</button></div>
+    <div class="mc">
+      <div style="margin-bottom:12px">
+        <label class="fl">Choose Node Type</label>
+        <div class="palette" id="nodePalette"></div>
+      </div>
+      <div class="fg"><label class="fl">Node Name</label><input class="fi" id="nnName" placeholder="e.g. Fetch User Data"></div>
+      <div class="fg"><label class="fl">Description</label><input class="fi" id="nnDesc" placeholder="What this node does…"></div>
+      <input type="hidden" id="nnType" value="action">
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('addNodeModal')">Cancel</button>
+      <button class="btn btn-y" onclick="addCanvasNode()">Add Node</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add List Step -->
+<div class="ov" id="addStepModal">
+  <div class="modal">
+    <div class="mh"><span class="mh-title">ADD STEP</span><button class="mx" onclick="closeModal('addStepModal')">✕</button></div>
+    <div class="mc">
+      <div class="fg"><label class="fl">Step Type</label>
+        <select class="fs" id="stepType" onchange="stepTypeChange()">
+          <option value="http">🌐 HTTP Request</option>
+          <option value="ai">🤖 AI Process</option>
+          <option value="condition">⊘ Condition / Filter</option>
+          <option value="transform">⇄ Data Transform</option>
+          <option value="delay">⏱ Delay</option>
+          <option value="notify">📣 Notification</option>
+          <option value="code">⌨ Run Code</option>
+          <option value="log">📋 Log Data</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Step Name</label><input class="fi" id="stepName" placeholder="e.g. Fetch Customer Data"></div>
+      <div id="stepExtraFields"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('addStepModal')">Cancel</button>
+      <button class="btn btn-y" onclick="addListStep()">Add Step</button>
+    </div>
+  </div>
+</div>
+
+<!-- New AI Node -->
+<div class="ov" id="newAiNodeModal">
+  <div class="modal">
+    <div class="mh"><span class="mh-title">NEW AI NODE</span><button class="mx" onclick="closeModal('newAiNodeModal')">✕</button></div>
+    <div class="mc">
+      <div class="fg"><label class="fl">Node Name</label><input class="fi" id="aiNodeName" placeholder="e.g. Email Classifier"></div>
+      <div class="fg"><label class="fl">Model</label>
+        <select class="fs" id="aiNodeModel"><option>claude-sonnet-4-20250514</option><option>claude-haiku-4-5-20251001</option><option>gpt-4o</option></select>
+      </div>
+      <div class="fg"><label class="fl">System Prompt</label><textarea class="fta" id="aiNodeSystem" placeholder="You are a helpful assistant that…"></textarea></div>
+      <div class="fg"><label class="fl">User Prompt Template</label><textarea class="fta" id="aiNodePrompt" placeholder="Classify the following: {{input}}"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('newAiNodeModal')">Cancel</button>
+      <button class="btn btn-y" onclick="saveAiNode()">Save Node</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Cron -->
+<div class="ov" id="newCronModal">
+  <div class="modal">
+    <div class="mh"><span class="mh-title">NEW SCHEDULE</span><button class="mx" onclick="closeModal('newCronModal')">✕</button></div>
+    <div class="mc">
+      <div class="fg"><label class="fl">Schedule Name</label><input class="fi" id="cronName" placeholder="e.g. Daily Report"></div>
+      <div class="fg"><label class="fl">Workflow to Trigger</label>
+        <select class="fs" id="cronWf" id="cronWfSelect"></select>
+      </div>
+      <div class="fg">
+        <label class="fl">Cron Expression</label>
+        <div class="cron-parts">
+          <div class="cron-part"><label>Min</label><input id="cMin" value="0"></div>
+          <div class="cron-part"><label>Hour</label><input id="cHour" value="9"></div>
+          <div class="cron-part"><label>Day</label><input id="cDay" value="*"></div>
+          <div class="cron-part"><label>Month</label><input id="cMonth" value="*"></div>
+          <div class="cron-part"><label>Weekday</label><input id="cWeek" value="*"></div>
+        </div>
+        <div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc)" id="cronPreview"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('newCronModal')">Cancel</button>
+      <button class="btn btn-y" onclick="saveCron()">Save Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const STORE = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('af_'+k)||'null'); }catch{ return null; } },
+  set(k,v){ localStorage.setItem('af_'+k, JSON.stringify(v)); },
+  del(k){ localStorage.removeItem('af_'+k); }
+};
+
+let workflows  = STORE.get('workflows')  || [];
+let executions = STORE.get('executions') || [];
+let canvasData = STORE.get('canvas')     || { nodes:[], edges:[] };
+let listSteps  = STORE.get('listSteps')  || [];
+let aiNodes    = STORE.get('aiNodes')    || [];
+let cronJobs   = STORE.get('cronJobs')   || [];
+let httpNodes  = STORE.get('httpNodes')  || [];
+let syslogs    = [];
+let uptimeSec  = 0;
+let execTodayCnt = 0;
+
+function save(){
+  STORE.set('workflows', workflows);
+  STORE.set('executions', executions);
+  STORE.set('canvas', canvasData);
+  STORE.set('listSteps', listSteps);
+  STORE.set('aiNodes', aiNodes);
+  STORE.set('cronJobs', cronJobs);
+  STORE.set('httpNodes', httpNodes);
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+const uid = () => '_' + Math.random().toString(36).slice(2,9);
+const ts  = () => { const n=new Date(); return `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`; };
+const pad = n => String(n).padStart(2,'0');
+const now = () => new Date().toLocaleString('en-IN',{hour12:false});
+
+function toast(msg, type='i'){
+  const box = document.getElementById('toastBox');
+  const icons = {s:'✓',e:'✕',i:'ℹ',w:'⚠'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span style="font-size:14px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  box.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+
+function log(level, msg){
+  const entry = {t:ts(), level, msg};
+  syslogs.unshift(entry);
+  if(syslogs.length>500) syslogs.pop();
+  refreshLiveLogs();
+  const sl = document.getElementById('sysLog');
+  if(sl && document.getElementById('pg-logs').classList.contains('on')) renderLogs();
+}
+
+function refreshLiveLogs(){
+  ['dashLog','builderLog','listLog'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML = syslogs.slice(0,25).map(l=>`<div class="ll"><span class="lt">${l.t}</span><span class="lv-${l.level}">[${l.level.toUpperCase()}]</span><span class="lm">${l.msg}</span></div>`).join('');
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SIDEBAR / NAV
+// ═══════════════════════════════════════════════
+let sbMini = false;
+function toggleSb(){
+  sbMini = !sbMini;
+  document.getElementById('sb').classList.toggle('mini', sbMini);
+  document.getElementById('sbIco').textContent = sbMini ? '▷' : '◁';
+  document.getElementById('sbLbl').textContent = sbMini ? 'Expand' : 'Collapse';
+}
+function toggleSbMobile(){
+  const sb = document.getElementById('sb');
+  sb.style.transform = sb.style.transform === 'translateX(-100%)' ? '' : 'translateX(-100%)';
+}
+
+function nav(id, el){
+  // hide all pages + canvas
+  document.querySelectorAll('.page,.canvas-page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('on'));
+  if(el) el.classList.add('on');
+  else { // called programmatically
+    document.querySelectorAll('.sb-item').forEach(n=>{ if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(`'${id}'`)) n.classList.add('on'); });
+  }
+
+  const titles={dash:'DASHBOARD',canvas:'CANVAS BUILDER',list:'LIST BUILDER',workflows:'WORKFLOWS',http:'HTTP NODES',ai:'AI NODES',cron:'CRON TRIGGERS',executions:'EXECUTIONS',logs:'LOGS',settings:'SETTINGS'};
+  document.getElementById('tbTitle').textContent = titles[id]||id.toUpperCase();
+
+  const pg = document.getElementById('pg-'+id);
+  if(pg) pg.classList.add('on');
+
+  if(id==='canvas') renderCanvas();
+  if(id==='workflows') renderWorkflows();
+  if(id==='executions') renderExecutions();
+  if(id==='logs') renderLogs();
+  if(id==='ai') renderAiNodes();
+  if(id==='cron') renderCron();
+  if(id==='http') renderHttpNodes();
+  if(id==='dash') renderDash();
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='newCronModal') populateCronWfSelect();
+  if(id==='addNodeModal') buildPalette();
+  if(id==='addStepModal') stepTypeChange();
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+
+// ═══════════════════════════════════════════════
+// WORKFLOWS
+// ═══════════════════════════════════════════════
+function createWorkflow(){
+  const name = document.getElementById('nwName').value.trim();
+  if(!name){ toast('Enter workflow name','e'); return; }
+  const wf = {
+    id:uid(), name,
+    desc: document.getElementById('nwDesc').value,
+    trigger: document.getElementById('nwTrigger').value,
+    status: document.getElementById('nwStatus').value,
+    steps:0, runs:0, lastRun:'Never', created: now()
+  };
+  workflows.unshift(wf);
+  save();
+  closeModal('newWfModal');
+  document.getElementById('nwName').value='';
+  document.getElementById('nwDesc').value='';
+  updateBadge();
+  renderDash();
+  renderWorkflows();
+  log('ok', `Workflow created: ${name}`);
+  toast(`"${name}" created!`, 's');
+}
+
+function updateBadge(){
+  document.getElementById('wfBadge').textContent = workflows.length;
+}
+
+function renderWorkflows(filter='all'){
+  const tb = document.getElementById('wfTbl');
+  if(!tb) return;
+  const data = filter==='all' ? workflows : workflows.filter(w=>w.status===filter);
+  if(!data.length){ tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--t3)">No workflows found</td></tr>`; return; }
+  tb.innerHTML = data.map(w=>`
+    <tr>
+      <td style="color:var(--text);font-weight:600">${w.name}<div style="font-size:10px;color:var(--t3);margin-top:2px">${w.desc||''}</div></td>
+      <td>${stag(w.status)}</td>
+      <td><span class="tag tb-tag">${w.trigger}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${w.steps}</td>
+      <td style="color:var(--t3);font-size:11px">${w.lastRun}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--acc)">${w.runs}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-green" style="padding:3px 8px;font-size:10px" onclick="runWorkflow('${w.id}')">▷</button>
+          <button class="btn btn-s" style="padding:3px 8px;font-size:10px" onclick="toggleWfStatus('${w.id}')">${w.status==='active'?'⏸':'▷'}</button>
+          <button class="btn btn-red" style="padding:3px 8px;font-size:10px" onclick="deleteWf('${w.id}')">✕</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function stag(s){
+  const m={active:'tg',paused:'tp',error:'te',idle:'ti'};
+  const ic={active:'●',paused:'❙❙',error:'✕',idle:'○'};
+  return `<span class="tag ${m[s]||'ti'}">${ic[s]||'○'} ${s.toUpperCase()}</span>`;
+}
+
+function filterWf(f, btn){
+  document.querySelectorAll('#wfFilters .btn').forEach(b=>{ b.style.borderColor=''; b.style.color=''; });
+  btn.style.borderColor='var(--acc)'; btn.style.color='var(--acc)';
+  renderWorkflows(f);
+}
+
+function toggleWfStatus(id){
+  const w = workflows.find(x=>x.id===id);
+  if(!w) return;
+  w.status = w.status==='active' ? 'paused' : 'active';
+  save(); renderWorkflows(); renderDash();
+  log('info', `Workflow "${w.name}" → ${w.status}`);
+  toast(`"${w.name}" ${w.status}`, 'i');
+}
+
+function deleteWf(id){
+  const idx = workflows.findIndex(w=>w.id===id);
+  if(idx<0) return;
+  const name = workflows[idx].name;
+  workflows.splice(idx,1);
+  save(); updateBadge(); renderWorkflows(); renderDash();
+  log('warn', `Workflow deleted: ${name}`);
+  toast(`"${name}" deleted`,'i');
+}
+
+function runWorkflow(id, triggerType='Manual'){
+  const w = workflows.find(x=>x.id===id);
+  if(!w){ toast('Workflow not found','e'); return; }
+  if(w.status==='error'){ toast('Fix errors before running','e'); return; }
+  const start = Date.now();
+  w.lastRun = ts();
+  w.runs++;
+  log('info', `Running: "${w.name}" [${triggerType}]`);
+  toast(`Running "${w.name}"…`,'i');
+  document.getElementById('runningCount').textContent = parseInt(document.getElementById('runningCount').textContent||0)+1;
+
+  setTimeout(()=>{
+    const dur = ((Date.now()-start)/1000).toFixed(2);
+    const success = Math.random() > 0.08;
+    execTodayCnt++;
+    document.getElementById('execToday').textContent = execTodayCnt;
+    document.getElementById('runningCount').textContent = Math.max(0, parseInt(document.getElementById('runningCount').textContent||1)-1);
+    executions.unshift({
+      id:'#'+Math.floor(1000+Math.random()*9000), wfName:w.name, status:success?'success':'error',
+      trigger:triggerType, started:now(), dur:dur+'s', nodes:w.steps||3
+    });
+    if(executions.length>200) executions.pop();
+    if(!success){
+      w.status='error';
+      document.getElementById('errCount').textContent = parseInt(document.getElementById('errCount').textContent||0)+1;
+      log('err', `"${w.name}" failed after ${dur}s`);
+      toast(`"${w.name}" failed!`,'e');
+    } else {
+      if(w.status==='error') w.status='active';
+      log('ok', `"${w.name}" completed in ${dur}s`);
+      toast(`"${w.name}" done ✓`,'s');
+    }
+    save(); renderDash(); renderWorkflows();
+    if(document.getElementById('pg-executions').classList.contains('on')) renderExecutions();
+  }, 1200 + Math.random()*1800);
+}
+
+function runAllActive(){
+  const active = workflows.filter(w=>w.status==='active');
+  if(!active.length){ toast('No active workflows','w'); return; }
+  active.forEach((w,i)=>setTimeout(()=>runWorkflow(w.id,'Batch'), i*400));
+  toast(`Running ${active.length} workflows…`,'i');
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDash(){
+  const active = workflows.filter(w=>w.status==='active').length;
+  document.getElementById('dTotal').textContent = workflows.length;
+  document.getElementById('dActive').textContent = active;
+  document.getElementById('dExec').textContent = executions.length;
+  document.getElementById('dExecChg').textContent = `+${execTodayCnt} today`;
+  const succRate = executions.length ? Math.round((executions.filter(e=>e.status==='success').length/executions.length)*100) : 100;
+  document.getElementById('dSucc').textContent = succRate+'%';
+  updateBadge();
+
+  const tb = document.getElementById('dashTbl');
+  if(!tb) return;
+  const data = workflows.slice(0,6);
+  if(!data.length){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t3)">No workflows yet. <button class="btn btn-s" style="font-size:11px;padding:3px 8px;margin-left:8px" onclick="openModal('newWfModal')">Create one</button></td></tr>`; return; }
+  tb.innerHTML = data.map(w=>`
+    <tr>
+      <td style="color:var(--text);font-weight:500">${w.name}</td>
+      <td>${stag(w.status)}</td>
+      <td><span class="tag tb-tag" style="font-size:10px">${w.trigger}</span></td>
+      <td style="color:var(--t3);font-size:11px">${w.lastRun}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--acc);font-size:12px">${w.runs}</td>
+      <td><button class="btn btn-green" style="padding:3px 8px;font-size:10px" onclick="runWorkflow('${w.id}')">▷ Run</button></td>
+    </tr>`).join('');
+}
+
+function refreshDash(){ renderDash(); log('info','Dashboard refreshed'); toast('Refreshed','s'); }
+
+// ═══════════════════════════════════════════════
+// CANVAS BUILDER
+// ═══════════════════════════════════════════════
+const NODE_TYPES = {
+  trigger:  {icon:'🔔',color:'#f59e0b',bg:'rgba(245,158,11,.15)'},
+  http:     {icon:'🌐',color:'#3b82f6',bg:'rgba(59,130,246,.15)'},
+  ai:       {icon:'🤖',color:'#7c3aed',bg:'rgba(124,58,237,.15)'},
+  condition:{icon:'⊘', color:'#06b6d4',bg:'rgba(6,182,212,.15)'},
+  action:   {icon:'⚡',color:'#22c55e',bg:'rgba(34,197,94,.15)'},
+  transform:{icon:'⇄',color:'#e8ff47',bg:'rgba(232,255,71,.1)'},
+  notify:   {icon:'📣',color:'#ec4899',bg:'rgba(236,72,153,.15)'},
+  delay:    {icon:'⏱',color:'#6b7280',bg:'rgba(107,114,128,.15)'},
+  code:     {icon:'⌨',color:'#f97316',bg:'rgba(249,115,22,.15)'},
+  end:      {icon:'⬡',color:'#ef4444',bg:'rgba(239,68,68,.15)'},
+};
+
+let selNode = null;
+let drag = null;
+let cZoom = 100;
+let connecting = null;
+
+function buildPalette(){
+  document.getElementById('nodePalette').innerHTML = Object.entries(NODE_TYPES).map(([t,n])=>`
+    <div class="pal-item" onclick="selectPaletteType('${t}',this)">
+      <span>${n.icon}</span><span style="color:var(--t2)">${t.charAt(0).toUpperCase()+t.slice(1)}</span>
+    </div>`).join('');
+}
+
+function selectPaletteType(type, el){
+  document.querySelectorAll('.pal-item').forEach(p=>p.style.borderColor='');
+  el.style.borderColor = 'var(--acc)';
+  document.getElementById('nnType').value = type;
+}
+
+function addCanvasNode(){
+  const type = document.getElementById('nnType').value || 'action';
+  const name = document.getElementById('nnName').value.trim() || (type.charAt(0).toUpperCase()+type.slice(1)+' Node');
+  const id = uid();
+  // place new node at offset
+  const count = canvasData.nodes.length;
+  canvasData.nodes.push({
+    id, type, name, desc: document.getElementById('nnDesc').value||'',
+    x: 40 + (count%4)*200, y: 40 + Math.floor(count/4)*130, status:'idle'
+  });
+  closeModal('addNodeModal');
+  document.getElementById('nnName').value=''; document.getElementById('nnDesc').value='';
+  save(); renderCanvas();
+  log('ok', `Canvas node added: ${name}`);
+  toast(`"${name}" added`,'s');
+}
+
+function renderCanvas(){
+  const inner = document.getElementById('canvasInner');
+  const svg   = document.getElementById('canvasSVG');
+  if(!inner||!svg) return;
+  inner.querySelectorAll('.nd').forEach(n=>n.remove());
+  svg.innerHTML='';
+
+  canvasData.nodes.forEach(n=>{
+    const nt = NODE_TYPES[n.type]||NODE_TYPES.action;
+    const el = document.createElement('div');
+    el.className = `nd ${n.status==='run'?'run':n.status==='err'?'err':n.status==='done'?'done':''}`;
+    el.id = 'nd-'+n.id;
+    el.style.left = n.x+'px'; el.style.top = n.y+'px';
+    el.innerHTML = `
+      <div class="port port-in" data-id="${n.id}" data-port="in"></div>
+      <div class="nd-head">
+        <div class="nd-ico" style="background:${nt.bg}"><span style="color:${nt.color}">${nt.icon}</span></div>
+        <div><div class="nd-name">${n.name}</div><div class="nd-type">${n.type}</div></div>
+      </div>
+      <div class="nd-body">
+        <div class="nd-desc">${n.desc||'No description'}</div>
+        <div class="nd-status ${n.status==='run'?'ns-run':n.status==='done'?'ns-done':n.status==='err'?'ns-err':'ns-idle'}">
+          ${n.status==='run'?'◉ RUNNING':n.status==='done'?'✓ DONE':n.status==='err'?'✕ ERROR':'○ IDLE'}
+        </div>
+      </div>
+      <div class="port port-out" data-id="${n.id}" data-port="out"></div>`;
+    el.addEventListener('mousedown', e=>startDrag(e,n,el));
+    el.addEventListener('click', e=>{ e.stopPropagation(); openNodePanel(n); });
+    el.querySelector('.port-out').addEventListener('click', e=>{ e.stopPropagation(); startConnect(n.id); });
+    el.querySelector('.port-in').addEventListener('click',  e=>{ e.stopPropagation(); endConnect(n.id); });
+    inner.appendChild(el);
+  });
+
+  drawEdges();
+  document.getElementById('canvasInfo').textContent = `${canvasData.nodes.length} nodes · ${canvasData.edges.length} edges`;
+}
+
+function drawEdges(){
+  const svg = document.getElementById('canvasSVG'); svg.innerHTML='';
+  canvasData.edges.forEach(e=>{
+    const f = document.getElementById('nd-'+e.from);
+    const t = document.getElementById('nd-'+e.to);
+    if(!f||!t) return;
+    const x1=f.offsetLeft+f.offsetWidth, y1=f.offsetTop+f.offsetHeight/2;
+    const x2=t.offsetLeft,               y2=t.offsetTop+t.offsetHeight/2;
+    const mx=(x1+x2)/2;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.className.baseVal=`edge ${e.active?'active':''}`;
+    svg.appendChild(path);
+  });
+}
+
+// drag
+document.addEventListener('mousemove',e=>{
+  if(!drag) return;
+  const wrap = document.getElementById('canvasWrap').getBoundingClientRect();
+  drag.node.x = Math.max(0, e.clientX-wrap.left-drag.ox);
+  drag.node.y = Math.max(0, e.clientY-wrap.top-drag.oy);
+  drag.el.style.left = drag.node.x+'px';
+  drag.el.style.top  = drag.node.y+'px';
+  drawEdges();
+});
+document.addEventListener('mouseup',()=>{
+  if(drag){ drag.el.style.cursor='grab'; drag=null; save(); }
+});
+
+function startDrag(e,node,el){
+  drag={node,el,ox:e.clientX-el.getBoundingClientRect().left,oy:e.clientY-el.getBoundingClientRect().top};
+  el.style.cursor='grabbing'; e.stopPropagation();
+}
+
+// connect
+function startConnect(fromId){
+  connecting = fromId;
+  toast('Click an input port on target node to connect','i');
+}
+function endConnect(toId){
+  if(!connecting||connecting===toId) return;
+  const exists = canvasData.edges.find(e=>e.from===connecting&&e.to===toId);
+  if(!exists){
+    canvasData.edges.push({id:uid(),from:connecting,to:toId,active:false});
+    save(); renderCanvas();
+    log('info',`Edge connected: ${connecting} → ${toId}`);
+  }
+  connecting=null;
+}
+
+function deselectNode(e){
+  if(!e.target.closest('.nd')){ selNode=null; closePanel(); }
+}
+
+function openNodePanel(n){
+  selNode=n;
+  const panel=document.getElementById('ndPanel');
+  const nt=NODE_TYPES[n.type]||NODE_TYPES.action;
+  panel.classList.add('open');
+  document.getElementById('npTitle').textContent=n.name;
+  document.getElementById('npBody').innerHTML=`
+    <div class="fg"><label class="fl">Name</label><input class="fi" value="${n.name}" onchange="updateNodeProp('${n.id}','name',this.value)"></div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fta" style="height:60px" onchange="updateNodeProp('${n.id}','desc',this.value)">${n.desc||''}</textarea></div>
+    <div class="fg"><label class="fl">Type</label><input class="fi" value="${n.type}" readonly style="color:${nt.color}"></div>
+    <div style="font-size:10px;color:var(--t3);margin:8px 0 10px;font-weight:600;letter-spacing:1px">STATUS</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${['idle','run','done','err'].map(s=>`<button class="btn btn-s" style="justify-content:flex-start;font-size:11px" onclick="setNodeStatus('${n.id}','${s}')">${s==='run'?'◉ Set Running':s==='done'?'✓ Set Done':s==='err'?'✕ Set Error':'○ Set Idle'}</button>`).join('')}
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-red" style="width:100%;font-size:11px" onclick="deleteCanvasNode('${n.id}')">✕ Delete Node</button>
+    </div>`;
+  document.querySelectorAll('.nd').forEach(x=>x.classList.remove('sel'));
+  document.getElementById('nd-'+n.id)?.classList.add('sel');
+}
+
+function closePanel(){ document.getElementById('ndPanel').classList.remove('open'); }
+
+function updateNodeProp(id,prop,val){
+  const n=canvasData.nodes.find(x=>x.id===id);
+  if(n){ n[prop]=val; save(); renderCanvas(); openNodePanel(n); }
+}
+
+function setNodeStatus(id,status){
+  const n=canvasData.nodes.find(x=>x.id===id);
+  if(n){ n.status=status; save(); renderCanvas(); openNodePanel(n); }
+}
+
+function deleteCanvasNode(id){
+  canvasData.nodes = canvasData.nodes.filter(n=>n.id!==id);
+  canvasData.edges = canvasData.edges.filter(e=>e.from!==id&&e.to!==id);
+  closePanel(); save(); renderCanvas();
+  toast('Node deleted','i');
+}
+
+function clearCanvas(){
+  if(!confirm('Clear all canvas nodes?')) return;
+  canvasData={nodes:[],edges:[]};
+  save(); renderCanvas(); closePanel();
+  toast('Canvas cleared','i');
+}
+
+function saveCanvas(){ save(); toast('Canvas saved ✓','s'); log('ok','Canvas saved'); }
+
+function execCanvas(){
+  if(!canvasData.nodes.length){ toast('Add nodes first','w'); return; }
+  const nodes=[...canvasData.nodes];
+  log('info','Canvas execution started');
+  nodes.forEach((n,i)=>{ n.status='idle'; });
+  renderCanvas();
+  let i=0;
+  function nextNode(){
+    if(i>=nodes.length){ toast('Canvas execution complete ✓','s'); log('ok','Canvas execution done'); save(); renderCanvas(); return; }
+    nodes[i].status='run'; renderCanvas();
+    log('info',`Executing: ${nodes[i].name}`);
+    setTimeout(()=>{
+      nodes[i].status='done'; i++;
+      renderCanvas(); nextNode();
+    }, 600+Math.random()*400);
+  }
+  nextNode();
+}
+
+function czoom(delta){
+  if(delta===0){ cZoom=100; }
+  else cZoom=Math.max(40,Math.min(200,cZoom+delta));
+  document.getElementById('canvasInner').style.transform=`scale(${cZoom/100})`;
+  document.getElementById('canvasInner').style.transformOrigin='top left';
+  document.getElementById('zoomLbl').textContent=cZoom+'%';
+}
+
+// ═══════════════════════════════════════════════
+// LIST BUILDER
+// ═══════════════════════════════════════════════
+const STEP_ICONS = {http:'🌐',ai:'🤖',condition:'⊘',transform:'⇄',delay:'⏱',notify:'📣',code:'⌨',log:'📋'};
+const STEP_COLORS= {http:'#3b82f6',ai:'#7c3aed',condition:'#06b6d4',transform:'#e8ff47',delay:'#6b7280',notify:'#ec4899',code:'#f97316',log:'#94a3b8'};
+
+function stepTypeChange(){
+  const type=document.getElementById('stepType').value;
+  const extra=document.getElementById('stepExtraFields');
+  const fields={
+    http:`<div class="fg"><label class="fl">URL</label><input class="fi" id="stepUrl" placeholder="https://api.example.com/data"></div>
+          <div class="fg"><label class="fl">Method</label><select class="fs" id="stepMethod"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>`,
+    ai:`<div class="fg"><label class="fl">Prompt</label><textarea class="fta" id="stepPrompt" placeholder="Analyze the following data: {{input}}"></textarea></div>
+        <div class="fg"><label class="fl">Model</label><select class="fs" id="stepModel"><option>claude-sonnet-4-20250514</option><option>claude-haiku-4-5-20251001</option></select></div>`,
+    condition:`<div class="fg"><label class="fl">Condition Expression</label><input class="fi" id="stepCond" placeholder="{{value}} > 100"></div>`,
+    transform:`<div class="fg"><label class="fl">Transform Code (JS)</label><textarea class="fta" id="stepCode" placeholder="return data.items.map(i => i.name)"></textarea></div>`,
+    delay:`<div class="fg"><label class="fl">Delay (milliseconds)</label><input class="fi" id="stepDelay" type="number" value="1000"></div>`,
+    notify:`<div class="fg"><label class="fl">Message Template</label><textarea class="fta" id="stepMsg" placeholder="Workflow complete: {{result}}"></textarea></div>`,
+    code:`<div class="fg"><label class="fl">JavaScript Code</label><textarea class="fta" id="stepJs" placeholder="// Access input via 'data' variable\nreturn data;" style="height:100px;font-family:'JetBrains Mono',monospace;font-size:11px"></textarea></div>`,
+    log:`<div class="fg"><label class="fl">Log Message</label><input class="fi" id="stepLogMsg" placeholder="Step completed: {{input}}"></div>`,
+  };
+  extra.innerHTML = fields[type]||'';
+}
+
+function addListStep(){
+  const type = document.getElementById('stepType').value;
+  const name = document.getElementById('stepName').value.trim() || (type+' Step');
+  const config={};
+  // capture extra fields
+  ['stepUrl','stepMethod','stepPrompt','stepModel','stepCond','stepCode','stepDelay','stepMsg','stepJs','stepLogMsg'].forEach(id=>{
+    const el=document.getElementById(id); if(el) config[id]=el.value;
+  });
+  listSteps.push({id:uid(),type,name,config,status:'idle',enabled:true});
+  save(); closeModal('addStepModal');
+  document.getElementById('stepName').value='';
+  renderListSteps();
+  toast(`Step "${name}" added`,'s');
+}
+
+function renderListSteps(){
+  const wrap=document.getElementById('listSteps');
+  const empty=document.getElementById('listEmpty');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  if(!listSteps.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  listSteps.forEach((step,i)=>{
+    const color=STEP_COLORS[step.type]||'#94a3b8';
+    const icon=STEP_ICONS[step.type]||'⚡';
+    const el=document.createElement('div');
+    el.style.cssText=`display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s1);border:1px solid var(--b1);border-radius:10px;border-left:3px solid ${color};transition:all .15s;`;
+    el.innerHTML=`
+      <div style="font-size:20px">${icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${step.name}</div>
+        <div style="font-size:10px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-top:2px">${step.type}</div>
+      </div>
+      <div id="step-status-${step.id}" class="nd-status ns-idle" style="font-size:10px">○ IDLE</div>
+      <div class="toggle-row" style="margin:0" onclick="toggleStep('${step.id}',this)">
+        <div class="tog ${step.enabled?'on':''}"></div>
+      </div>
+      <div style="display:flex;gap:4px">
+        ${i>0?`<button class="btn btn-s" style="padding:3px 8px;font-size:11px" onclick="moveStep(${i},-1)">↑</button>`:''}
+        ${i<listSteps.length-1?`<button class="btn btn-s" style="padding:3px 8px;font-size:11px" onclick="moveStep(${i},1)">↓</button>`:''}
+        <button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="deleteStep('${step.id}')">✕</button>
+      </div>`;
+    wrap.appendChild(el);
+  });
+  document.getElementById('listLogWrap') && (document.getElementById('listLogWrap').style.display='block');
+}
+
+function toggleStep(id, row){
+  const s=listSteps.find(x=>x.id===id);
+  if(s){ s.enabled=!s.enabled; row.querySelector('.tog').classList.toggle('on',s.enabled); save(); }
+}
+
+function moveStep(i,dir){
+  const j=i+dir;
+  if(j<0||j>=listSteps.length) return;
+  [listSteps[i],listSteps[j]]=[listSteps[j],listSteps[i]];
+  save(); renderListSteps();
+}
+
+function deleteStep(id){
+  listSteps=listSteps.filter(s=>s.id!==id);
+  save(); renderListSteps(); toast('Step removed','i');
+}
+
+function execList(){
+  const enabled=listSteps.filter(s=>s.enabled);
+  if(!enabled.length){ toast('No enabled steps','w'); return; }
+  document.getElementById('listLogWrap') && (document.getElementById('listLogWrap').style.display='block');
+  log('info','List workflow execution started');
+  // reset
+  enabled.forEach(s=>{ s.status='idle'; const el=document.getElementById('step-status-'+s.id); if(el){el.className='nd-status ns-idle';el.textContent='○ IDLE';} });
+  let i=0;
+  function runNext(){
+    if(i>=enabled.length){ toast('List flow complete ✓','s'); log('ok','List flow done'); return; }
+    const s=enabled[i];
+    s.status='run';
+    const sEl=document.getElementById('step-status-'+s.id);
+    if(sEl){sEl.className='nd-status ns-run';sEl.textContent='◉ RUNNING';}
+    log('info',`Step: ${s.name} [${s.type}]`);
+    const delay = s.type==='delay' ? parseInt(s.config.stepDelay||1000) : 600+Math.random()*600;
+    setTimeout(()=>{
+      s.status='done';
+      if(sEl){sEl.className='nd-status ns-done';sEl.textContent='✓ DONE';}
+      log('ok',`Done: ${s.name}`);
+      i++; runNext();
+    }, delay);
+  }
+  runNext();
+}
+
+// ═══════════════════════════════════════════════
+// HTTP NODES
+// ═══════════════════════════════════════════════
+async function sendHTTP(){
+  const method = document.getElementById('httpMethod').value;
+  const url    = document.getElementById('httpUrl').value.trim();
+  if(!url){ toast('Enter a URL','e'); return; }
+  const respEl = document.getElementById('httpResp');
+  const statEl = document.getElementById('httpStatus');
+  respEl.textContent = '// Sending request…';
+  statEl.textContent = '…';
+  log('info', `HTTP ${method} → ${url}`);
+  try{
+    let headers={};
+    try{ headers=JSON.parse(document.getElementById('httpHeaders').value||'{}'); }catch{}
+    const authType = document.getElementById('httpAuth').value;
+    if(authType==='bearer') headers['Authorization']='Bearer '+document.getElementById('authValue').value;
+    if(authType==='basic'){
+      const [u,p]=(document.getElementById('authValue').value||':').split(':');
+      headers['Authorization']='Basic '+btoa((u||'')+':'+(p||''));
+    }
+    const opts={method, headers};
+    if(['POST','PUT','PATCH'].includes(method)){
+      try{ opts.body=document.getElementById('httpBody').value; }catch{}
+    }
+    const res = await fetch(url, opts);
+    let body;
+    const ct = res.headers.get('content-type')||'';
+    if(ct.includes('json')){ const json=await res.json(); body=JSON.stringify(json,null,2); }
+    else body=await res.text();
+    statEl.textContent = res.status+' '+res.statusText;
+    statEl.style.color = res.ok ? 'var(--green)' : 'var(--red)';
+    respEl.textContent = body;
+    respEl.style.color = res.ok ? 'var(--green)' : 'var(--red)';
+    log(res.ok?'ok':'err', `HTTP ${res.status} from ${url}`);
+    toast(`${res.status} ${res.statusText}`, res.ok?'s':'e');
+  }catch(err){
+    statEl.textContent='ERROR'; statEl.style.color='var(--red)';
+    respEl.textContent='Error: '+err.message; respEl.style.color='var(--red)';
+    log('err', 'HTTP Error: '+err.message);
+    toast('Request failed: '+err.message,'e');
+  }
+}
+
+function toggleAuthField(){
+  const t=document.getElementById('httpAuth').value;
+  const f=document.getElementById('authField');
+  const l=document.getElementById('authLabel');
+  f.style.display=t==='none'?'none':'block';
+  l.textContent=t==='bearer'?'Bearer Token':'Username:Password';
+}
+
+function saveHttpNode(){
+  const name=`${document.getElementById('httpMethod').value} ${document.getElementById('httpUrl').value.slice(0,30)}`;
+  httpNodes.push({id:uid(),name,method:document.getElementById('httpMethod').value,url:document.getElementById('httpUrl').value});
+  save(); renderHttpNodes(); toast('HTTP node saved','s');
+}
+
+function renderHttpNodes(){
+  const el=document.getElementById('savedHttpNodes');
+  if(!el) return;
+  el.innerHTML=httpNodes.map(n=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s1);border:1px solid var(--b1);border-radius:8px">
+      <span class="tag tb-tag" style="font-size:10px">${n.method}</span>
+      <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.url}</span>
+      <button class="btn btn-s" style="padding:3px 8px;font-size:10px" onclick="loadHttpNode('${n.id}')">Load</button>
+      <button class="btn btn-red" style="padding:3px 8px;font-size:10px" onclick="deleteHttpNode('${n.id}')">✕</button>
+    </div>`).join('') || '<div style="color:var(--t3);font-size:12px;padding:8px">No saved nodes</div>';
+}
+
+function loadHttpNode(id){
+  const n=httpNodes.find(x=>x.id===id);
+  if(n){ document.getElementById('httpMethod').value=n.method; document.getElementById('httpUrl').value=n.url; toast('Loaded','i'); }
+}
+
+function deleteHttpNode(id){
+  httpNodes=httpNodes.filter(x=>x.id!==id);
+  save(); renderHttpNodes();
+}
+
+// ═══════════════════════════════════════════════
+// AI NODES
+// ═══════════════════════════════════════════════
+function saveAiNode(){
+  const name=document.getElementById('aiNodeName').value.trim();
+  if(!name){ toast('Enter node name','e'); return; }
+  aiNodes.push({
+    id:uid(), name, model:document.getElementById('aiNodeModel').value,
+    system:document.getElementById('aiNodeSystem').value,
+    prompt:document.getElementById('aiNodePrompt').value,
+    created:now()
+  });
+  save(); closeModal('newAiNodeModal');
+  document.getElementById('aiNodeName').value=''; document.getElementById('aiNodeSystem').value=''; document.getElementById('aiNodePrompt').value='';
+  renderAiNodes(); toast(`AI node "${name}" saved`,'s');
+}
+
+function renderAiNodes(){
+  const el=document.getElementById('aiNodesList');
+  const em=document.getElementById('aiNodesEmpty');
+  if(!el) return;
+  if(!aiNodes.length){ em.style.display='block'; el.innerHTML=''; return; }
+  em.style.display='none';
+  el.innerHTML=aiNodes.map(n=>`
+    <div style="background:var(--s1);border:1px solid var(--b1);border-left:3px solid var(--acc3);border-radius:10px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">🤖</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${n.name}</div>
+            <div style="font-size:10px;color:var(--t3)">${n.model}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-green" style="font-size:11px;padding:4px 10px" onclick="testAiNode('${n.id}')">▷ Test</button>
+          <button class="btn btn-red" style="font-size:11px;padding:4px 10px" onclick="deleteAiNode('${n.id}')">✕</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:4px"><b style="color:var(--t2)">System:</b> ${n.system||'—'}</div>
+      <div style="font-size:11px;color:var(--t3)"><b style="color:var(--t2)">Prompt:</b> ${n.prompt||'—'}</div>
+    </div>`).join('');
+}
+
+function deleteAiNode(id){
+  aiNodes=aiNodes.filter(x=>x.id!==id);
+  save(); renderAiNodes(); toast('AI node deleted','i');
+}
+
+async function testAiNode(id){
+  const n=aiNodes.find(x=>x.id===id);
+  if(!n) return;
+  const key=document.getElementById('apiKey')?.value;
+  toast(`Testing "${n.name}"…`,'i');
+  log('info',`AI node test: ${n.name}`);
+  if(!key||key.length<10){ toast('Add API key in Settings first','w'); log('warn','No API key set'); return; }
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:n.model||'claude-haiku-4-5-20251001',max_tokens:200,
+        system:n.system||'You are helpful.',
+        messages:[{role:'user',content:(n.prompt||'Hello').replace('{{input}}','test input')}]
+      })
+    });
+    const data=await res.json();
+    if(data.content?.[0]?.text){
+      log('ok',`AI response: ${data.content[0].text.slice(0,80)}…`);
+      toast('AI node test success ✓','s');
+    } else { throw new Error(data.error?.message||'Unknown error'); }
+  }catch(e){ log('err','AI test failed: '+e.message); toast('AI test failed: '+e.message,'e'); }
+}
+
+// ═══════════════════════════════════════════════
+// CRON
+// ═══════════════════════════════════════════════
+const CRON_PRESETS=[
+  {label:'Every Minute', cron:'* * * * *'},
+  {label:'Every 5 Min',  cron:'*/5 * * * *'},
+  {label:'Every Hour',   cron:'0 * * * *'},
+  {label:'Daily 9 AM',   cron:'0 9 * * *'},
+  {label:'Daily Midnight',cron:'0 0 * * *'},
+  {label:'Weekly Monday', cron:'0 9 * * 1'},
+  {label:'Monthly 1st',  cron:'0 9 1 * *'},
+  {label:'Weekdays 9 AM',cron:'0 9 * * 1-5'},
+];
+let cronTimers={};
+
+function renderCron(){
+  const presetsEl=document.getElementById('cronPresets');
+  if(presetsEl) presetsEl.innerHTML=CRON_PRESETS.map(p=>`
+    <button class="btn btn-s" style="font-size:11px;justify-content:flex-start" onclick="applyPreset('${p.cron}')">
+      <span style="font-size:10px;color:var(--acc);font-family:'JetBrains Mono',monospace">${p.cron}</span>
+      <span style="margin-left:4px">${p.label}</span>
+    </button>`).join('');
+
+  const list=document.getElementById('cronList');
+  const empty=document.getElementById('cronEmpty');
+  if(!list) return;
+  if(!cronJobs.length){ empty.style.display='block'; list.innerHTML=''; return; }
+  empty.style.display='none';
+  list.innerHTML=cronJobs.map(c=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s1);border:1px solid var(--b1);border-radius:10px">
+      <span style="font-size:20px">⏰</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${c.name}</div>
+        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <code style="font-size:10px;background:var(--s3);padding:2px 6px;border-radius:4px;color:var(--acc);font-family:'JetBrains Mono',monospace">${c.cron}</code>
+          <span style="font-size:11px;color:var(--t3)">→ ${c.wfName||'No workflow'}</span>
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">Next: ${c.nextRun||'—'} | Runs: ${c.runs||0}</div>
+      </div>
+      <div class="toggle-row" style="margin:0" onclick="toggleCron('${c.id}',this)">
+        <div class="tog ${c.active?'on':''}"></div>
+      </div>
+      <button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="deleteCron('${c.id}')">✕</button>
+    </div>`).join('');
+}
+
+function applyPreset(cron){
+  const parts=cron.split(' ');
+  ['cMin','cHour','cDay','cMonth','cWeek'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.value=parts[i]||'*'; });
+  updateCronPreview();
+}
+
+function updateCronPreview(){
+  const parts=['cMin','cHour','cDay','cMonth','cWeek'].map(id=>document.getElementById(id)?.value||'*');
+  document.getElementById('cronPreview').textContent='Cron: '+parts.join(' ');
+}
+['cMin','cHour','cDay','cMonth','cWeek'].forEach(id=>{
+  setTimeout(()=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',updateCronPreview); },500);
+});
+
+function populateCronWfSelect(){
+  const sel=document.getElementById('cronWf');
+  if(!sel) return;
+  sel.innerHTML='<option value="">— Select workflow —</option>'+workflows.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+}
+
+function saveCron(){
+  const name=document.getElementById('cronName').value.trim();
+  const wfId=document.getElementById('cronWf').value;
+  if(!name){ toast('Enter schedule name','e'); return; }
+  const cron=['cMin','cHour','cDay','cMonth','cWeek'].map(id=>document.getElementById(id)?.value||'*').join(' ');
+  const wf=workflows.find(w=>w.id===wfId);
+  const job={id:uid(),name,cron,wfId,wfName:wf?.name||'—',active:true,runs:0,nextRun:'Calculating…'};
+  cronJobs.push(job);
+  save(); closeModal('newCronModal');
+  document.getElementById('cronName').value='';
+  startCronTimer(job);
+  renderCron();
+  toast(`Schedule "${name}" created`,'s');
+  log('ok',`Cron created: ${name} [${cron}]`);
+}
+
+function startCronTimer(job){
+  // Simple simulation: run every X seconds based on cron minute field
+  const minField=job.cron.split(' ')[0];
+  const interval = minField==='*' ? 60000 : minField.startsWith('*/') ? parseInt(minField.slice(2))*60000 : 3600000;
+  const simInterval = Math.min(interval, 30000); // for demo cap at 30s
+  if(cronTimers[job.id]) clearInterval(cronTimers[job.id]);
+  cronTimers[job.id]=setInterval(()=>{
+    if(!job.active) return;
+    job.runs++;
+    job.nextRun='In '+Math.floor(simInterval/1000)+'s';
+    const wf=workflows.find(w=>w.id===job.wfId);
+    if(wf) runWorkflow(wf.id,'Cron');
+    log('info',`Cron fired: ${job.name}`);
+    save(); renderCron();
+  },simInterval);
+}
+
+function toggleCron(id,row){
+  const j=cronJobs.find(x=>x.id===id);
+  if(j){ j.active=!j.active; row.querySelector('.tog').classList.toggle('on',j.active); save(); renderCron(); toast(j.name+(j.active?' activated':' paused'),'i'); }
+}
+
+function deleteCron(id){
+  if(cronTimers[id]){ clearInterval(cronTimers[id]); delete cronTimers[id]; }
+  cronJobs=cronJobs.filter(x=>x.id!==id);
+  save(); renderCron(); toast('Schedule deleted','i');
+}
+
+// ═══════════════════════════════════════════════
+// EXECUTIONS
+// ═══════════════════════════════════════════════
+function renderExecutions(){
+  const tb=document.getElementById('execTbl');
+  const em=document.getElementById('execEmpty');
+  if(!tb) return;
+  if(!executions.length){ tb.innerHTML=''; em.style.display='block'; return; }
+  em.style.display='none';
+  tb.innerHTML=executions.slice(0,100).map((e,i)=>`
+    <tr class="exec-row">
+      <td>${e.id||'#'+(1000+i)}</td>
+      <td style="color:var(--text);font-weight:500">${e.wfName}</td>
+      <td>${e.status==='success'?'<span class="tag tg">✓ SUCCESS</span>':'<span class="tag te">✕ FAILED</span>'}</td>
+      <td><span class="tag tb-tag" style="font-size:10px">${e.trigger||'Manual'}</span></td>
+      <td style="font-size:11px;color:var(--t3)">${e.started}</td>
+      <td style="font-family:\'JetBrains Mono\',monospace;color:var(--acc)">${e.dur}</td>
+      <td style="font-family:\'JetBrains Mono\',monospace">${e.nodes||'—'}</td>
+    </tr>`).join('');
+}
+
+function clearExecutions(){
+  if(!confirm('Clear all execution history?')) return;
+  executions=[]; save(); renderExecutions(); toast('Executions cleared','i');
+}
+
+// ═══════════════════════════════════════════════
+// LOGS
+// ═══════════════════════════════════════════════
+function renderLogs(){
+  const el=document.getElementById('sysLog');
+  if(!el) return;
+  const f=document.getElementById('logFilter')?.value||'all';
+  const data=f==='all'?syslogs:syslogs.filter(l=>l.level===f);
+  el.innerHTML=data.map(l=>`<div class="ll"><span class="lt">${l.t}</span><span class="lv-${l.level}">[${l.level.toUpperCase()}]</span><span class="lm">${l.msg}</span></div>`).join('');
+  el.scrollTop=0;
+}
+
+function clearLogs(){ syslogs=[]; renderLogs(); refreshLiveLogs(); toast('Logs cleared','i'); }
+
+function exportLogs(){
+  const txt=syslogs.map(l=>`[${l.t}] [${l.level.toUpperCase()}] ${l.msg}`).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);
+  a.download='autoflow-logs.txt'; a.click();
+  toast('Logs exported','s');
+}
+
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+function saveSettings(){
+  const settings={wsName:document.getElementById('wsName').value,maxRetries:document.getElementById('maxRetries').value,execTimeout:document.getElementById('execTimeout').value,maxTokens:document.getElementById('maxTokens').value};
+  STORE.set('settings',settings);
+  toast('Settings saved ✓','s');
+  log('ok','Settings saved');
+}
+
+function exportData(){
+  const data={workflows,executions,canvasData,listSteps,aiNodes,cronJobs,httpNodes,exported:now()};
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
+  a.download='autoflow-backup.json'; a.click();
+  toast('Data exported','s');
+}
+
+function importData(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=evt=>{
+    try{
+      const data=JSON.parse(evt.target.result);
+      if(data.workflows) workflows=data.workflows;
+      if(data.executions) executions=data.executions;
+      if(data.canvasData) canvasData=data.canvasData;
+      if(data.listSteps) listSteps=data.listSteps;
+      if(data.aiNodes) aiNodes=data.aiNodes;
+      if(data.cronJobs) cronJobs=data.cronJobs;
+      if(data.httpNodes) httpNodes=data.httpNodes;
+      save(); updateBadge(); renderDash();
+      toast('Data imported ✓','s');
+      log('ok','Data imported from file');
+    }catch{ toast('Invalid JSON file','e'); }
+  };
+  r.readAsText(file);
+}
+
+function resetAll(){
+  if(!confirm('⚠ This will delete ALL data. Are you sure?')) return;
+  ['workflows','executions','canvas','listSteps','aiNodes','cronJobs','httpNodes','settings'].forEach(k=>STORE.del(k));
+  workflows=[]; executions=[]; canvasData={nodes:[],edges:[]}; listSteps=[]; aiNodes=[]; cronJobs=[]; httpNodes=[];
+  Object.values(cronTimers).forEach(clearInterval); cronTimers={};
+  save(); updateBadge(); renderDash(); renderWorkflows();
+  toast('All data reset','w');
+  log('warn','All data reset by user');
+}
+
+// ═══════════════════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════════════════
+function globalSearchFn(q){
+  if(!q){ renderDash(); return; }
+  const tb=document.getElementById('dashTbl');
+  if(!tb) return;
+  const results=workflows.filter(w=>w.name.toLowerCase().includes(q.toLowerCase())||w.desc?.toLowerCase().includes(q.toLowerCase()));
+  tb.innerHTML=results.map(w=>`
+    <tr>
+      <td style="color:var(--text);font-weight:500">${w.name}</td>
+      <td>${stag(w.status)}</td>
+      <td><span class="tag tb-tag">${w.trigger}</span></td>
+      <td style="color:var(--t3)">${w.lastRun}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--acc)">${w.runs}</td>
+      <td><button class="btn btn-green" style="font-size:10px;padding:3px 8px" onclick="runWorkflow('${w.id}')">▷</button></td>
+    </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">No results for "${q}"</td></tr>`;
+}
+
+// ═══════════════════════════════════════════════
+// CLOCK + UPTIME
+// ═══════════════════════════════════════════════
+setInterval(()=>{
+  const n=new Date();
+  const cl=document.getElementById('clock');
+  if(cl) cl.textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  uptimeSec++;
+  const h=Math.floor(uptimeSec/3600), m=Math.floor((uptimeSec%3600)/60), s=uptimeSec%60;
+  const ut=document.getElementById('uptime');
+  if(ut) ut.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+}, 1000);
+
+// ═══════════════════════════════════════════════
+// SEED LOGS
+// ═══════════════════════════════════════════════
+const SEED=[
+  {level:'ok',  msg:'AutoFlow engine started successfully'},
+  {level:'info',msg:'localStorage loaded: '+JSON.stringify({workflows:workflows.length,executions:executions.length})},
+  {level:'ok',  msg:'Cron scheduler initialized'},
+  {level:'info',msg:'System ready. Version 1.0.0'},
+];
+SEED.forEach((l,i)=>{
+  setTimeout(()=>{ log(l.level,l.msg); }, i*200);
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+(function init(){
+  updateBadge();
+  renderDash();
+  renderListSteps();
+  // restart any active cron jobs
+  cronJobs.filter(c=>c.active).forEach(c=>startCronTimer(c));
+})();
+</script>
+</body>
+</html>
